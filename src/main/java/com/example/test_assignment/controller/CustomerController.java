@@ -1,7 +1,10 @@
 package com.example.test_assignment.controller;
 
+import com.example.test_assignment.dao.CreateCustomerRequest;
+import com.example.test_assignment.dao.CustomerResponse;
+import com.example.test_assignment.dao.UpdateCustomerRequest;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import com.example.test_assignment.model.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import com.example.test_assignment.service.CustomerService;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -24,36 +26,37 @@ public class CustomerController {
     }
 
     @PostMapping
-    public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
-        log.info("Creating a new customer with name: {}", customer.getName());
-        Customer createdCustomer = customerService.createCustomer(customer);
-        log.info("Customer created with ID: {}", createdCustomer.getId());
-        return ResponseEntity.ok(createdCustomer);
+    public ResponseEntity<CustomerResponse> createCustomer(@Valid @RequestBody CreateCustomerRequest request) {
+        log.info("Creating a new customer with name: {}", request.getName());
+        CustomerResponse response = customerService.createCustomer(request);
+        log.info("Customer created with ID: {}", response.getId());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
-    public List<Customer> getAllCustomers() {
+    public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
         log.info("Fetching all customers");
-        List<Customer> customers = customerService.getAllCustomers();
-        log.info("Fetched {} customers", customers.size());
-        return customers;
+        List<CustomerResponse> responses = customerService.getAllCustomers();
+
+        log.info("Fetched {} customers", responses.size());
+        return new ResponseEntity<>(responses, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
+    public ResponseEntity<CustomerResponse> getCustomerById(@PathVariable Long id) {
         log.info("Fetching customer with ID: {}", id);
-        Optional<Customer> customer = customerService.getCustomerById(id);
+        CustomerResponse response = customerService.getCustomerById(id);
         log.info("Customer with ID: {} found", id);
-        return customer.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Customer> updateCustomer(@RequestBody Customer customer, @PathVariable Long id) {
+    public ResponseEntity<CustomerResponse> updateCustomer(@Valid @RequestBody UpdateCustomerRequest customer, @PathVariable Long id) {
         log.info("Updating customer with ID: {}", id);
         try {
-            Customer updatedCustomer = customerService.updateCustomer(customer, id);
+            CustomerResponse response = customerService.updateCustomer(customer, id);
             log.info("Customer with ID: {} updated successfully", id);
-            return ResponseEntity.ok(updatedCustomer);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             log.warn("Customer with ID: {} not found for update", id);
             return ResponseEntity.notFound().build();
@@ -61,14 +64,9 @@ public class CustomerController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteCustomer(@PathVariable Long id) {
-        if (customerService.getCustomerById(id).isPresent()) {
-            customerService.deleteCustomerById(id);
-            log.info("Customer with ID: {} deleted successfully", id);
-            return ResponseEntity.ok("Customer with ID " + id + " deleted successfully");
-        } else {
-            log.warn("Customer with ID: {} not found for deletion", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer with ID " + id + " not found");
-        }
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
+        customerService.deleteCustomerById(id);
+        log.info("Customer with ID: {} deleted successfully", id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

@@ -17,7 +17,6 @@ public class Customer {
     private Long id;
 
     @Size(min = 1, max = 255, message = "Name must be between 1 and 255 characters")
-
     @Column(unique = true)
     private String name;
 
@@ -35,10 +34,9 @@ public class Customer {
     @JsonIgnoreProperties("customer")
     private List<Project> projects;
 
-    public Customer(String name, String contact, LocalDateTime creation_date) {
+    public Customer(String name, String contact) {
         this.name = name;
         this.contact = contact;
-        this.creation_date = creation_date;
     }
 
     public Customer() {

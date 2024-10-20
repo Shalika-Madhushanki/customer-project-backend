@@ -1,6 +1,8 @@
 package com.example.test_assignment.service;
 
+import com.example.test_assignment.dao.CustomerResponse;
 import com.example.test_assignment.dao.ProjectRequest;
+import com.example.test_assignment.exception.ResourceNotFoundException;
 import com.example.test_assignment.model.Customer;
 import com.example.test_assignment.model.Project;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +35,7 @@ public class ProjectService {
     }
 
     public Project createProject(ProjectRequest projectRequest) {
-        Optional<Customer> customer = customerService.getCustomerById(projectRequest.getCustomerId());
+        Optional<Customer> customer = customerService.getCustomerEntityById(projectRequest.getCustomerId());
         if (customer.isPresent()) {
             Project project = new Project(projectRequest.getName(), projectRequest.getDescription());
             project.setCustomer(customer.get());
@@ -47,9 +49,13 @@ public class ProjectService {
         Project existingProject = projectRepository.findById(id).orElseThrow();
         existingProject.setName(projectRequest.getName());
         existingProject.setDescription(projectRequest.getDescription());
-        if (existingProject.getCustomer().getId() != projectRequest.getCustomerId()) {
-            Optional<Customer> customer = customerService.getCustomerById(projectRequest.getCustomerId());
-            existingProject.setCustomer(customer.get());
+        if (existingProject.getCustomer().getId().equals(projectRequest.getCustomerId())) {
+            Optional<Customer> customer = customerService.getCustomerEntityById(projectRequest.getCustomerId());
+            if (customer.isPresent()) {
+                existingProject.setCustomer(customer.get());
+            } else {
+                throw new ResourceNotFoundException("Customer not found for CustomerId: "  + id);
+            }
         }
         return projectRepository.save(existingProject);
     }
